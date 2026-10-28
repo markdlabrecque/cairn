@@ -25,15 +25,21 @@ export async function openRuntime(storage: Storage, config: Config, ledger: Rese
     settings: { extensions: [tools, provider.guard], compaction: { enabled: false }, retry: { enabled: false },
       stream: { maxRetries: 0 }, toolExecution: 'sequential' },
   }, context);
-  await harness.commit(async tx => {
-    const state = await tx.doc(StateDoc);
-    if (state.agentId && state.agentId !== config.agentId) throw new Error('Store belongs to another agent');
-    state.agentId = config.agentId;
-  }, context);
+  try {
+    await harness.commit(async tx => {
+      const state = await tx.doc(StateDoc);
+      if (state.agentId && state.agentId !== config.agentId) throw new Error('Store belongs to another agent');
+      state.agentId = config.agentId;
+    }, context);
+  } catch (error) { await harness.close(context); throw error; }
   let draining: Promise<void> | undefined;
   let closing = false;
+  let sealed = false;
+  let wake = false;
   function drain() {
-    if (draining || closing) return;
+    wake = true;
+    if (draining || closing || sealed) return;
+    wake = false;
     draining = (async () => {
       while (!closing) {
         const request = await harness.commit(async tx => {
@@ -82,25 +88,31 @@ export async function openRuntime(storage: Storage, config: Config, ledger: Rese
           }, context);
         }
       }
-    })().finally(() => { draining = undefined; });
-    // Storage failure seals the runtime. Do not invent a successful receipt or empty store.
-    void draining.catch(() => {});
+    })().catch(() => {
+      // Storage failure seals the runtime. Never admit into a dead queue.
+      sealed = true;
+    }).finally(() => {
+      draining = undefined;
+      // An admission can commit after the empty read but before this finally.
+      if (wake && !closing && !sealed) drain();
+    });
   }
   drain();
   return {
     async submit(input: Input) {
+      if (closing || sealed) throw new Rejection(503, 'Runner/storage unavailable');
       const digest = createHash('sha256').update(JSON.stringify({ sender: config.owner, source: 'cli', agent: config.agentId,
         conversation: input.conversationId, message: input.message })).digest('hex');
       const result = await harness.commit(async tx => {
         const doc = await tx.doc(StateDoc);
-        const existing = doc.receipts[input.requestId];
+        const existing = Object.hasOwn(doc.receipts, input.requestId) ? doc.receipts[input.requestId] : undefined;
         if (existing) {
           if (existing.digest !== digest) throw new Rejection(409, 'Request identity conflict');
           return { status: 200, receipt: existing.receipt };
         }
         const pending = Object.values(doc.receipts).filter(item => item.state === 'queued' || item.state === 'running').length;
         if (pending >= config.limits.queued + 1) throw new Rejection(429, 'Agent queue full');
-        if (!doc.conversations[input.conversationId]) {
+        if (!Object.hasOwn(doc.conversations, input.conversationId)) {
           const conversation = await tx.createConversation({ ownership: { kind: 'ownerless' } });
           await configure(tx, conversation.id, { extensions: [tools, provider.guard], tools: tools.tools });
           doc.conversations[input.conversationId] = conversation.id;
@@ -114,8 +126,9 @@ export async function openRuntime(storage: Storage, config: Config, ledger: Rese
       return { ...result, requestId: input.requestId };
     },
     async inspect(requestId: string, result: boolean) {
+      if (closing || sealed) throw new Rejection(503, 'Runner/storage unavailable');
       const state = await harness.snapshot(StateDoc, context);
-      const item = state?.receipts[requestId];
+      const item = state && Object.hasOwn(state.receipts, requestId) ? state.receipts[requestId] : undefined;
       if (!item) throw new Rejection(404, 'Unknown receipt');
       return { status: result && item.state !== 'completed' && item.state !== 'failed' ? 202 : 200,
         requestId: item.requestId, receipt: item.receipt, state: item.state,

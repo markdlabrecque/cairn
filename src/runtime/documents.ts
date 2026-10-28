@@ -11,7 +11,7 @@ export type State = {
   agentId: string; next: number; active: string | null;
   conversations: Record<string, ConversationId>; receipts: Record<string, Receipt>;
   todos: { id: string; title: string; state: 'open'; createdAt: number }[];
-  actions: Record<string, { name: string; args: string; result?: string }>;
+  actions: Record<string, { name: string; args: string; taskId?: number; callId?: string; toolVersion?: number; result?: string }>;
   calls: Record<string, { state: 'intent' | 'dispatched' | 'answered'; response?: string }>;
 };
 export const StateDoc = defineDoc<State>({

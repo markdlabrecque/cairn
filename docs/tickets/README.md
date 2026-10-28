@@ -9,7 +9,7 @@ Start with [TD-001: crash-safe todo slice](001-crash-safe-todo-slice.md). Review
 | Ticket | Deliverable | Status | Depends on |
 | --- | --- | --- | --- |
 | [TD-001](001-crash-safe-todo-slice.md) | Crash-safe terminal todo assistant | draft | TD-002 through TD-005 |
-| [TD-002](002-first-todo-round-trip.md) | First bounded CLI-to-todo round trip | blocked | Test-setup correction approval; safety coverage and live smoke incomplete |
+| [TD-002](002-first-todo-round-trip.md) | First bounded CLI-to-todo round trip | blocked | Live smoke unauthorized; local code green, fresh review and parent merge decision pending |
 | [TD-003](003-crash-safe-recovery.md) | Same receipts, actions, and results after a crash | draft | TD-002 |
 | [TD-004](004-persisted-limits.md) | Admission, permissions, and limits across restart | draft | TD-003 |
 | [TD-005](005-linux-service-demo.md) | Isolated Linux services and recorded demo | draft | TD-004 |
@@ -44,7 +44,9 @@ The owner confirmed both choices for TD-002:
 
 The [approval record](001-crash-safe-todo-slice.md#approval-record) preserves the response and clarification. The owner subsequently authorized TD-002 only, in its existing feature worktree, with deterministic local fixtures and the dependency stop rule. No live inference or credentials are authorized. No commits, merges, pushes, or subagents. Fresh independent review and merge belong to the parent later. TD-003 through TD-005 remain drafts.
 
-TD-002 now has a passing deterministic two-process add/list path and two passing Pi contract tests. Typecheck fails in its implementor-authored replay fixture; approval was requested for API/type-narrowing corrections with all assertions preserved. No Pi dependency failure has been demonstrated. Remaining safety work and the unauthorized live smoke keep acceptance open. See [runtime evidence](../runtime-contract.md).
+TD-002 now has a green local candidate: 62 cheap tests pass, including real-process and public Pi contracts, focused safety guards/ownership/queue tests, and the actual live adapter over a synthetic loopback wire fixture. Typecheck passes. The owner authorized correction of the predecessor's fixture/type errors; every assertion remains. Historical failures are retained in [runtime evidence](../runtime-contract.md). No Pi dependency failure has been demonstrated.
+
+Live acceptance remains unapproved, unchecked, and blocked. Fresh independent review follows. The parent must decide whether the completed local code may merge with that gap explicitly recorded; this is not merge approval or ticket completion. Full crash/race/service/reboot evidence remains later work.
 
 ## Export the plan
 

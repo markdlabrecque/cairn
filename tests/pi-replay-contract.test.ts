@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { BACKGROUND_CONTEXT as context } from '@earendil-works/chord/context';
 import { createModels, Type, fauxProvider, fauxAssistantMessage, fauxToolCall, fauxText } from '@earendil-works/pi-ai';
-import { defineDoc, defineTool, defineExtension, createRegistry, Harness, AssistantEntry } from '@earendil-works/pi-durable';
+import { defineDoc, defineTool, defineExtension, createRegistry, Harness, AssistantEntry, type EntryId } from '@earendil-works/pi-durable';
 import { SqliteStorage } from '@earendil-works/pi-durable/storage/sqlite';
 import { openNodeSqliteDatabase } from '@earendil-works/pi-durable/storage/sqlite/node';
 
@@ -21,7 +21,7 @@ test('public safe replay retains the tool decision and atomic application result
   const identities: string[] = [];
   const faux = fauxProvider();
   faux.setResponses([
-    fauxAssistantMessage([fauxToolCall('add_todo', { title: 'fixture' }, 'batch-call-1')], { stopReason: 'toolUse' }),
+    fauxAssistantMessage([fauxToolCall('add_todo', { title: 'fixture' }, { id: 'batch-call-1' })], { stopReason: 'toolUse' }),
     fauxAssistantMessage([fauxText('Stored fixture')]),
   ]);
   const models = createModels();
@@ -34,10 +34,17 @@ test('public safe replay retains the tool decision and atomic application result
       const replay = await api.commit(async tx => {
         const task = await tx.task(api.taskId);
         assert.ok(task);
-        assert.equal(task.input.kind, 'model');
-        // Public task input points to the committed assistant batch, before any effect.
-        const entry = await tx.entry(AssistantEntry, task.input.assistant);
-        assert.equal(entry?.model?.[0]?.content[0]?.type, 'toolCall');
+        const input = task.input;
+        assert.ok(input && typeof input === 'object' && !Array.isArray(input));
+        assert.equal(input.kind, 'model');
+        assert.equal(typeof input.assistant, 'number');
+        assert.ok(typeof input.assistant === 'number' && Number.isSafeInteger(input.assistant));
+        // Public task JSON stores branded IDs as numbers. Decode only after checking.
+        const entry = await tx.entry(AssistantEntry, input.assistant as EntryId);
+        const message = entry?.model?.[0];
+        assert.equal(message?.role, 'assistant');
+        assert.ok(message?.role === 'assistant');
+        assert.equal(message.content[0]?.type, 'toolCall');
         const doc = await tx.doc(Effects);
         const key = String(api.taskId);
         if (doc.results[key] !== undefined) return true;

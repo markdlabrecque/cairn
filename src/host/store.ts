@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, realpath, stat } from 'node:fs/promises';
+import { mkdir, realpath, stat, lstat, rm, mkdtemp, link, chmod, rmdir } from 'node:fs/promises';
 import { dirname, basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { once } from 'node:events';
@@ -16,6 +16,13 @@ export async function canonical(path: string): Promise<string> {
     return await realpath(path);
   } catch (error) {
     if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error;
+    // A dangling symlink is not a new canonical file. Never lock one path then
+    // let SQLite follow it to another path when creating the store.
+    const entry = await lstat(path).catch(cause => {
+      if (cause.code === 'ENOENT') return undefined;
+      throw cause;
+    });
+    if (entry) throw new Error('Dangling store alias is not supported');
     return join(await realpath(dirname(path)), basename(path));
   }
 }
@@ -30,6 +37,55 @@ async function lock(path: string) {
   ]);
   keeper.stdin.on('error', () => {});
   return async () => { keeper.stdin.end(); await exited; };
+}
+
+export async function ownSocket(socket: string) {
+  const path = join(await realpath(dirname(socket)), basename(socket));
+  const directory = await stat(dirname(path));
+  if (directory.uid !== process.getuid!() || (directory.mode & 0o022) !== 0) throw new Error('Unsafe socket directory');
+  const unlock = await lock(`${path}.lock`);
+  let created: Awaited<ReturnType<typeof lstat>> | undefined;
+  let privateDirectory: string | undefined;
+  try {
+    const existing = await lstat(path).catch(error => {
+      if (error.code === 'ENOENT') return undefined;
+      throw error;
+    });
+    // Refuse unknown/stale sockets rather than unlinking another owner's endpoint.
+    if (existing) throw new Error('Socket path already exists');
+    privateDirectory = await mkdtemp(join(dirname(path), '.runner-'));
+    const bindPath = join(privateDirectory, 's');
+    return {
+      path, bindPath,
+      async claim() {
+        const info = await lstat(bindPath);
+        if (!info.isSocket()) throw new Error('Expected owned socket');
+        created = info;
+        await chmod(bindPath, 0o600);
+        // Node unconditionally unlinks its bind path on close. Bind privately and
+        // publish a hard link so Node can never unlink a replaced public endpoint.
+        await link(bindPath, path);
+      },
+      async close() {
+        try {
+          const info = await lstat(path).catch(error => {
+            if (error.code === 'ENOENT') return undefined;
+            throw error;
+          });
+          if (created && info?.dev === created.dev && info.ino === created.ino) await rm(path);
+          const inner = await lstat(bindPath).catch(error => {
+            if (error.code === 'ENOENT') return undefined;
+            throw error;
+          });
+          if (created && inner?.dev === created.dev && inner.ino === created.ino) await rm(bindPath);
+          await rmdir(privateDirectory!);
+        } finally { await unlock(); }
+      },
+    };
+  } catch (error) {
+    try { if (privateDirectory) await rmdir(privateDirectory); } finally { await unlock(); }
+    throw error;
+  }
 }
 
 export async function ownStore(config: Config) {

@@ -45,15 +45,15 @@ These are proposed locations, not existing exports or files. Keep the public mod
 
 ## Acceptance
 
-- [ ] Record exact artifacts, integrity/lockfile, runtime/storage versions, public exports used, and effective PRAGMAs.
+- [x] Record exact artifacts, integrity/lockfile, runtime/storage versions, public exports used, and effective PRAGMAs.
 - [x] A normal add/list pair crosses both real processes and Pi Durable, not a replacement loop or direct CLI database write. Deterministic fixture only; see retained test output.
-- [ ] CLI disconnect does not cancel the admitted request. Its original receipt returns the stored answer.
-- [ ] Reusing an identical request returns the original receipt. Changed content returns 409. Two distinct requests with the same todo title create two todos.
-- [ ] Unauthenticated input, a denied route/tool, and malformed configuration create no run or todo. Credentials and request bodies stay out of ordinary logs.
-- [ ] Unknown prices, absent credentials, exhausted funds, and finite request limits block dispatch before a network call.
-- [ ] A reservation and durable dispatch intent precede every provider attempt. Recorded usage settles known results; uncertainty retains a conservative charge.
+- [x] CLI disconnect does not cancel the admitted request. Its original receipt returns the stored answer.
+- [x] Reusing an identical request returns the original receipt. Changed content returns 409. Two distinct requests with the same todo title create two todos.
+- [x] Unauthenticated input, a denied route/tool, and malformed configuration create no run or todo. Credentials and request bodies stay out of ordinary logs.
+- [x] Unknown prices, absent credentials, exhausted funds, and finite request limits block dispatch before a network call.
+- [x] A reservation and durable dispatch intent precede every provider attempt. Recorded usage settles known results; uncertainty retains a conservative charge.
 - [ ] The authorized live smoke uses `deepseek-ai/DeepSeek-V4-Flash-0731`, records usage, and completes add/list. If it is not authorized or available, record the blockage rather than claiming a real-model pass.
-- [ ] Configuration uses schema-validated JSON and the tool allowlist contains only `add_todo` and `list_todos`. YAML support, testing, and linting remain outside this slice.
+- [x] Configuration uses schema-validated JSON and the tool allowlist contains only `add_todo` and `list_todos`. YAML support, testing, and linting remain outside this slice.
 
 ## Stop condition
 
@@ -65,16 +65,19 @@ The owner explicitly authorized TD-002 implementation in the clean worktree on `
 
 ## Evidence
 
-The first deterministic round trip runs through real CLI, gateway, runner, Pi Durable and SQLite. `npm test` passes 3 tests, with none skipped. `npm run typecheck` exits 2 with six errors in the implementor-authored replay fixture. Approval was requested to correct its Pi API argument and type narrowing without changing any assertion. No test was weakened, retired, or skipped. Work is paused at that required approval boundary, not handed off as a green candidate.
+The current uncommitted candidate is based on parent checkpoint `d9e841d` on `feat/td-002-todo-round-trip`. The owner authorized correction of the predecessor's fixture/type errors and focused acceptance tests, retaining every assertion. Those corrections and the ledger, queue, ownership/socket, and startup fixes now pass the full cheap suite. `npm test`: exit 0, 62 passed, 0 failed/skipped. `npm run typecheck`: exit 0, no diagnostics. The focused safety command passes 61 tests. Example schema validation and `git diff --check` also exit 0. No test was weakened, retired, or skipped.
+
+The new deterministic loopback HTTP/SSE fixture runs the actual live DeepInfra adapter implementation and Pi's OpenAI-completions implementation, using synthetic authorization only. It proves local wire conversion and guards, not DeepInfra/model availability, current pricing, real usage, or answer quality. No external inference occurred.
 
 This is not a Pi dependency stop: the executed document/FULL and stable replay contracts passed. No public-contract failure justifies replacing the dependency. The requested transaction/replay reproduction remains executable in `tests/pi-durable-contract.test.ts` and `tests/pi-replay-contract.test.ts`.
 
-[Runtime contract evidence](../runtime-contract.md) records exact package/runtime/storage pins, APIs, commands/results, changed paths, and known unfinished safety work. [Focused output](../evidence/td002-focused-tests.txt), [typecheck output](../evidence/td002-typecheck.txt), [artifact/PRAGMA output](../evidence/td002-runtime-versions.json).
+[Runtime contract evidence](../runtime-contract.md) records package/runtime/storage pins, public APIs, commands/results, changed paths, limitations, and corrected history. Current [focused safety output](../evidence/td002-safety-focused-current.txt), [full cheap suite](../evidence/td002-tests-current.txt), [green typecheck](../evidence/td002-typecheck-current.txt), and [candidate source/document hashes](../evidence/td002-candidate-files.sha256). Historical [three-test pass](../evidence/td002-focused-tests.txt), [original red typecheck](../evidence/td002-typecheck.txt), and [artifact/PRAGMA output](../evidence/td002-runtime-versions.json) remain intact. The new real-process socket replacement failure and its correction are retained in the runtime evidence.
 
 Blocked conditions:
 
-- Required authorization to correct the implementor-authored test setup; the compile check is currently red.
-- Remaining TD-002 safety cases and known ledger/queue/socket gaps listed in the runtime evidence. They are not waived by the normal-path pass.
-- Live smoke remains unauthorized and credentials were not supplied or accessed. The exact selected model is unchanged. No real-model acceptance is claimed.
+- Live smoke remains unauthorized and real credentials were not supplied or accessed. The exact selected model is unchanged. Its acceptance checkbox stays open and the ticket stays blocked, not done.
+- Fresh independent review and the authoritative final gate have not run. Parent decision requested: may the completed local code merge after review with the live acceptance gap explicitly retained? No merge is authorized here.
 
-No commit, merge, push, subagent, service installation, connector test, or independent final review occurred. TD-003 through TD-005 remain drafts.
+The earlier test-correction approval blocker and local safety gaps are resolved for this candidate. Unknown/stale sockets intentionally fail closed rather than being automatically reclaimed. TD-003 must define and test crash restart/stale-endpoint recovery. The full crash matrix, persisted race suite, service/reboot and power-loss proofs remain outside this TD-002 candidate.
+
+This continuation made no commit, merge, push, subagent, service installation, connector test, or live-inference call. The parent checkpoint is prior history. TD-003 through TD-005 remain drafts.

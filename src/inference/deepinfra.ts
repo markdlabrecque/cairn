@@ -11,7 +11,14 @@ import type { Reservations } from './budget.ts';
 
 const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
-export function inference(config: Config, ledger: Reservations, getHarness: () => Harness) {
+// This is a test-only injection seam, never a configuration or CLI option.
+export function inference(config: Config, ledger: Reservations, getHarness: () => Harness, testEndpoint?: string) {
+  if (testEndpoint !== undefined) {
+    const url = new URL(testEndpoint);
+    if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || url.username || url.password || url.search || url.hash) {
+      throw new Error('Test endpoint must be literal loopback HTTP');
+    }
+  }
   let binding: { id: string; digest: string } | undefined;
   const guard = defineExtension({ name: 'inference-guard-v1', hooks: [hook(GenerationTask, {
     beforeRequest: async (request, api, ctx) => {
@@ -29,7 +36,7 @@ export function inference(config: Config, ledger: Reservations, getHarness: () =
     models: [{ id: config.inference.model, contextWindow: config.limits.inputTokens, maxTokens: config.limits.outputTokens }] });
   const fixtureModel = faux.getModel();
   const model: Model<Api> = config.inference.mode === 'fixture' ? fixtureModel : {
-    ...fixtureModel, api: 'openai-completions', baseUrl: 'https://api.deepinfra.com/v1/openai',
+    ...fixtureModel, api: 'openai-completions', baseUrl: testEndpoint ?? 'https://api.deepinfra.com/v1/openai',
     compat: { maxTokensField: 'max_tokens' as const, supportsStore: false, supportsDeveloperRole: false },
   };
   const stream: ProviderStreams['streamSimple'] = (selected, input, options) => {
@@ -69,8 +76,11 @@ export function inference(config: Config, ledger: Reservations, getHarness: () =
       const remaining = await harness.commit(async tx => {
         const state = await tx.doc(StateDoc);
         const request = active(state);
+        const remaining = Math.min(request.config.limits.activeMs, config.limits.activeMs) - (Date.now() - request.startedAt);
+        if (remaining <= 0) throw new Error('Active work limit exhausted');
+        if (state.calls[attempt.id]?.state !== 'intent') throw new Error('Attempt is not dispatchable');
         state.calls[attempt.id]!.state = 'dispatched';
-        return Math.min(request.config.limits.activeMs, config.limits.activeMs) - (Date.now() - request.startedAt);
+        return remaining;
       }, context);
       const controller = new AbortController();
       const signal = options?.signal ? AbortSignal.any([options.signal, controller.signal]) : controller.signal;
@@ -78,7 +88,12 @@ export function inference(config: Config, ledger: Reservations, getHarness: () =
       let progress = setTimeout(() => controller.abort(), config.limits.progressMs);
       const network: typeof fetch = async (url, init) => {
         const connection = setTimeout(() => controller.abort(), config.limits.connectMs);
-        try { return await fetch(url, { ...init, signal }); } finally { clearTimeout(connection); }
+        try {
+          if (testEndpoint !== undefined && new URL(String(url)).origin !== new URL(testEndpoint).origin) {
+            throw new Error('Test transport cannot leave loopback endpoint');
+          }
+          return await fetch(url, { ...init, signal, redirect: 'error' });
+        } finally { clearTimeout(connection); }
       };
       try {
         const sentOptions = { ...options, signal, maxRetries: 0, maxTokens: config.limits.outputTokens, timeoutMs: undefined,
@@ -109,7 +124,11 @@ export function inference(config: Config, ledger: Reservations, getHarness: () =
           const state = await tx.doc(StateDoc);
           state.calls[attempt.id] = { state: 'answered', response: JSON.stringify(response) };
         }, context);
-        if (response.usage.totalTokens > 0) {
+        const usage = response.usage;
+        const knownUsage = [usage.input, usage.output, usage.cacheRead, usage.cacheWrite, usage.totalTokens]
+          .every(value => Number.isSafeInteger(value) && value >= 0)
+          && usage.totalTokens > 0 && usage.totalTokens === usage.input + usage.output + usage.cacheRead + usage.cacheWrite;
+        if (knownUsage && response.stopReason !== 'error' && response.stopReason !== 'aborted') {
           ledger.settle(attempt.id, Math.ceil((response.usage.input + response.usage.cacheRead + response.usage.cacheWrite) * rates.inputUsdPerMillion + response.usage.output * rates.outputUsdPerMillion));
         }
         if (response.stopReason === 'error' || response.stopReason === 'aborted') events.push({ type: 'error', reason: response.stopReason, error: response });

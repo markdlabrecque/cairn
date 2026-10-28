@@ -13,18 +13,21 @@ export function todoExtension(config: Config) {
       const state = await tx.doc(StateDoc);
       const request = active(state);
       if (!config.tools.includes(name) || !request.config.tools.includes(name)) throw new Error('Tool denied');
+      if (Date.now() - request.startedAt >= config.limits.activeMs) throw new Error('Active work limit exhausted');
       const prior = state.actions[key];
       if (prior) {
-        if (prior.name !== name || prior.args !== encoded) throw new Error('Changed action arguments');
+        if (prior.name !== name || prior.args !== encoded || (prior.callId !== undefined && prior.callId !== api.callId)) throw new Error('Changed action arguments');
         return;
       }
       if (request.toolCalls >= Math.min(request.config.limits.toolCalls, config.limits.toolCalls)) throw new Error('Tool call limit exhausted');
       request.toolCalls++;
-      state.actions[key] = { name, args: encoded };
+      state.actions[key] = { name, args: encoded, taskId: api.taskId, callId: api.callId, toolVersion: 1 };
     }, context);
     const result = await api.commit(async tx => {
       const state = await tx.doc(StateDoc);
-      active(state);
+      const request = active(state);
+      if (!config.tools.includes(name) || !request.config.tools.includes(name)) throw new Error('Tool denied');
+      if (Date.now() - request.startedAt >= config.limits.activeMs) throw new Error('Active work limit exhausted');
       const action = state.actions[key]!;
       if (action.result !== undefined) return action.result;
       if (name === 'add_todo') {
@@ -33,7 +36,7 @@ export function todoExtension(config: Config) {
         action.result = JSON.stringify(todo);
       } else {
         const start = args.cursor ?? 0;
-        const end = start + Math.min(config.limits.listPage, 100);
+        const end = start + Math.min(config.limits.listPage, request.config.limits.listPage, 100);
         action.result = JSON.stringify({ items: state.todos.slice(start, end), next: end < state.todos.length ? end : null });
       }
       return action.result!;

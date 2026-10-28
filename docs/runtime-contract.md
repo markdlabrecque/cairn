@@ -1,10 +1,10 @@
 # TD-002 runtime contract evidence
 
-TD-002 is incomplete and not ready for review or merge. The fixture round trip runs, but typecheck fails in an implementor-authored contract test. No Pi dependency stop condition has been demonstrated. No live inference was authorized or attempted.
+TD-002 has a green local code candidate for independent review, not completed acceptance or merge approval. The full cheap suite passes 62 tests and typecheck passes. Live inference remains unauthorized, the live acceptance checkbox stays open, and the ticket remains blocked. No Pi dependency stop condition has been demonstrated.
 
 ## Authorization and worktree
 
-Work started on clean branch `feat/td-002-todo-round-trip` at planning commit `91c7880`. The owner authorized TD-002 only, with deterministic local fixtures. No commits, merges, pushes, subagents, production access, connector tests, credential retrieval, or service installation occurred. TD-003 through TD-005 remain drafts.
+Initial work started on clean branch `feat/td-002-todo-round-trip` at planning commit `91c7880`. The parent checkpointed that work at `d9e841d`. This continuation verified the same branch and a clean worktree at that checkpoint before editing. The owner explicitly authorized correction of the predecessor's test/API/type errors with every assertion retained, focused safety fixes, and deterministic local acceptance tests. This continuation made no commits, merges, pushes, subagents, external inference, production access, connector tests, secret retrieval, or service/global configuration changes. Only synthetic local authentication files were read by the tests. TD-003 through TD-005 remain drafts.
 
 The implementor profile references `~/.agents/skills/subagent-tdd-pipeline/SKILL.md`. That file was absent. The owner's request and the local tickets supplied the stage instructions. No separate red-test handoff was present, so the retained tests were authored here.
 
@@ -72,10 +72,10 @@ An initial metadata probe tried Pi AI's unexported `package.json` subpath and fa
 | `defineTool`, `defineExtension`, `createRegistry`, explicit conversation `extensions` and `tools` | Only the todo extension/tool are selected in the replay test; both todo tools plus the inference guard are selected in the process test. No coding tools installed. |
 | `Conversation.submit`, stable `requestId`, `Submission.wait`, `Harness.submission` | Receipt retrieval and duplicate submission through the process path; reacquisition after reopen in the contract test. Application digest checking supplies changed-payload conflicts. |
 | `AssistantEntry`, `tx.task`, `tx.entry`, tool `api.taskId`/`callId`/`commit`, `replay: 'safe'` | Contract test observes the persisted assistant decision before the application effect, closes after the effect, reopens, and observes the same execution identity with one application item. It uses cooperative close, not SIGKILL. |
-| `GenerationTask`, `hook`, public `getTask`, Pi AI `createModels`, `createProvider`, provider streams | Before-request hook binds a durable generation task/attempt to the mandatory adapter. Adapter checks the binding again before reserving or dispatching. Normal fixture path executes it. Failure cases remain untested. |
+| `GenerationTask`, `hook`, public `getTask`, Pi AI `createModels`, `createProvider`, provider streams | Before-request hook binds a durable generation task/attempt to the mandatory adapter. Adapter checks the binding again before reserving or dispatching. Normal fixture path executes it. Focused failure cases now pass in `tests/inference-acceptance.test.ts`. |
 | Pi AI `fauxProvider`, `fauxAssistantMessage`, `fauxToolCall`, event stream | Deterministic fixture tool call followed by final answer. No external inference. |
 
-`beforeRequest` is not itself a fail-closed authorization hook. The installed generation code reports ordinary hook errors and continues. Its public hook API provides reads and memos, not a transaction writer. The adapter therefore rejects missing/mismatched attempt binding and owns the pre-dispatch path. The installed `ToolTask` bypasses `beforeTool` on safe replay, so the tool implementation itself checks permissions and limits. These are inspected contracts; denied/recovery matrix coverage is still required.
+`beforeRequest` is not itself a fail-closed authorization hook. The installed generation code reports ordinary hook errors and continues. Its public hook API provides reads and memos, not a transaction writer. The adapter therefore rejects missing/mismatched attempt binding and owns the pre-dispatch path. The installed `ToolTask` bypasses `beforeTool` on safe replay, so the tool implementation itself checks permissions and limits. Denied tools, accepted/current permissions, limits, unbound inference, persisted application attempt states, and conservative uncertainty now have focused tests. The full forced-crash and persisted race matrices remain TD-003/TD-004 work.
 
 Primary references read include the installed Durable and Pi AI READMEs, Chord README, declarations and relevant installed JavaScript. The linked Durable normative specification was read at historical commit `ede2c9b468d8e061c557d16957513715e6d49cd6`. That source specification is not substituted for the installed artifact. Its local downloaded copy is ignored under `tmp/upstream/`.
 
@@ -83,13 +83,13 @@ Primary references read include the installed Durable and Pi AI READMEs, Chord R
 
 `tests/slice.test.ts` creates an isolated temporary configuration and owner-only synthetic authentication file. It starts a real runner and gateway as separate Node processes, then invokes the CLI in further processes. It executes add, polls the persisted answer, resubmits an identical request, rejects changed content, lists the todo, checks status, rejects unauthenticated input, and checks the child logs for fixture payload/token leakage.
 
-The runner alone opens Pi's agent store. Gateway and CLI forward HTTP only. The host uses `/usr/bin/flock` keepers before writable open and a mode-0600 Unix socket. Application receipts, queue order, todo effects/results, and model intents/responses use supported Pi documents. The host spending ledger is a separate application-owned SQLite file with FULL. These mechanisms have a normal-path test, not complete safety acceptance.
+The runner alone opens Pi's agent store. Gateway and CLI forward HTTP only. The host uses `/usr/bin/flock` keepers before writable open and a mode-0600 Unix socket. Application receipts, queue order, todo effects/results, and model intents/responses use supported Pi documents. The host spending ledger is a separate application-owned SQLite file with FULL. These mechanisms now also have focused safety coverage described below, not full crash/reboot acceptance.
 
-The selected provider/model remains DeepInfra `deepseek-ai/DeepSeek-V4-Flash-0731`. Fixture mode is explicit in the test configuration and result metadata; it does not test that model's availability, quality, pricing, or usage reporting. The live adapter uses Pi AI's OpenAI-completions implementation at the direct DeepInfra endpoint, with hidden retries disabled. It has not run against DeepInfra, including no local HTTP wire-fixture test yet.
+The selected provider/model remains DeepInfra `deepseek-ai/DeepSeek-V4-Flash-0731`. Fixture mode is explicit in the test configuration and result metadata; it does not test that model's availability, quality, pricing, or usage reporting. The live adapter uses Pi AI's OpenAI-completions implementation at the direct DeepInfra endpoint, with hidden retries disabled. It has not run against DeepInfra. A literal `127.0.0.1` HTTP/SSE fixture now exercises this exact live-adapter implementation, including OpenAI request fields, streamed add/list tool-call conversion, usage, errors, missing usage, and connection/progress/active deadlines. This is not a real-model pass. The optional endpoint argument is an internal test seam only, absent from configuration and CLI; external test endpoints and redirects are refused.
 
 `config/assistant.example.json` selects live mode, has no credential, and has unknown prices. It is intentionally unable to dispatch. Validation checks its JSON schema without reading a credential. Do not start live work from this example without separate owner authorization.
 
-## Checks and current blocker
+## Initial checkpoint checks and corrected failures
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund   # repeatable install command, not rerun after final lock update
@@ -101,7 +101,7 @@ node src/cli.ts --config config/assistant.example.json --json config validate
 git diff --check
 ```
 
-Executed results:
+Historical results from the first implementation, retained rather than overwritten:
 
 - `npm test`: 3 tests passed, 0 failed, 0 skipped. [Output](evidence/td002-focused-tests.txt).
 - `node --test tests/slice.test.ts`: first ran red because `src/runner.ts` did not exist; after implementation, passed with the real process path.
@@ -111,28 +111,63 @@ Executed results:
 - `git diff --check`: exit 0.
 - No pre-existing application test suite existed in this worktree. No expensive recovery, reboot, service, connector, or live-inference gate ran. No independent reviewer gate ran.
 
-The implementor rules require approval before changing tests. Approval was requested to correct only the implementor-authored replay fixture setup:
+At the first checkpoint, approval was requested to correct the implementor-authored replay fixture setup:
 
 1. Pass `{ id: 'batch-call-1' }` as the third `fauxToolCall` argument, matching the installed declaration, rather than a string.
 2. Add JSON-object/number narrowing before reading the public task input and decode its stored assistant ID at that trusted boundary.
 3. Narrow the stored model message to assistant before accessing content block types.
 
-All existing assertions must stay. No test has been weakened, deleted, skipped, or retired. These corrections have not been made. This is a process/approval blocker, not evidence that Pi Durable failed the dependency gate. The worktree is not a green candidate handoff.
+The owner subsequently authorized all three corrections. They are now applied, with all original assertions retained and additional boundary assertions. No test was weakened, deleted, skipped, or retired. This historical compile failure was in the fixture, not evidence that Pi Durable failed the dependency gate.
 
-## Remaining claims
+Two new acceptance-test setup errors were also corrected without dropping assertions: JSON fixtures now use the exported `JsonObject` type, and the application-state arrangement hook is explicitly selected on its conversation and returns `undefined` as Pi's declaration requires. The retained [JSON typecheck failure](evidence/td002-safety-typecheck-red.txt), [hook setup test failure](evidence/td002-hook-setup-red.txt), and [hook typecheck failure](evidence/td002-hook-typecheck-red.txt) precede the current green logs.
 
-Before TD-002 can be a candidate, correct the fixture setup with authorization, finish the focused safety tests, and fix their findings. Known implementation work remains:
+A real socket-safety failure was found by the new real-process shutdown test: Node unconditionally unlinks its bound Unix path when closing the server, even if another inode replaced it. The original inode check alone was insufficient. [Red reproduction](evidence/td002-safety-third.txt). The corrected runner binds inside a private mode-0700 directory, sets its socket to 0600, and exclusively publishes a hard link at the configured endpoint. Node only auto-unlinks the private bind path; application cleanup removes the public link only when its device/inode still match. The unchanged assertion now passes for both the ownership helper and real runner shutdown. [Corrected process output](evidence/td002-socket-corrected.txt).
 
-- Make shared reservation acquisition idempotent across an intent/reservation gap while retaining fail-closed uncertainty after dispatch. The current ledger rejects an existing reservation.
-- Test and close queue-drain completion/admission races, duplicate owners, path aliases, stale/shared sockets, and startup cleanup. The current socket startup unlinks its configured path without a separate socket-ownership check.
-- Test denied tools/routes, malformed config, missing credentials, unknown prices, zero funds, model/tool/time limits, and unavailable storage before claiming those acceptance rows.
-- Prove the mandatory pre-dispatch ordering with a retained adapter test, including known usage settlement and conservative uncertainty. The normal path alone does not prove all bypasses are closed.
-- Exercise two distinct requests with identical titles, CLI disconnect, list cursor bounds, context bounds, and final-answer retrieval without further execution.
-- Add a deterministic loopback wire fixture for the live adapter. The current deterministic provider is in-memory behind Pi AI's provider API.
+One concurrent tool edit timed out acquiring the harness mutation guard. A later serialized invocation of the same guarded edit succeeded. No guard, lock configuration, or bypass was changed.
 
-The separately authorized live smoke must still use exactly `deepseek-ai/DeepSeek-V4-Flash-0731` through DeepInfra, complete add/list, and record real usage. It is blocked on owner authorization and an approved protected credential file. No substitute model/provider or credential lookup is permitted. TD-002 and the epic remain unpassed.
+## Current local candidate
 
-## Changed paths
+The continuation fixes the listed ledger, queue, ownership, and startup gaps. Unsettled reservations are idempotent for the same ID and immutable estimate, including ledger reopen; changed amounts and settled IDs cannot authorize dispatch. The adapter rechecks `intent` in its dispatch transaction and refuses an existing `dispatched` attempt. Stored responses are reused. Known complete usage settles once; absent usage, truncated/error responses, and aborted dispatch retain the conservative reservation. Queue wakeups are remembered across worker completion, and a failed worker seals admission/lookup. Receipt/conversation lookups use own properties so valid IDs such as `toString` do not collide with object prototypes.
+
+Socket startup locks the canonical endpoint before publication, refuses any existing socket/file/symlink instead of taking it over, and cleans resources on ledger/runtime/startup failure. Unknown or stale endpoints are intentionally refused, not auto-reclaimed. A crash can therefore require explicit stale-endpoint recovery; TD-003 must define and test that path. No crash-recovery acceptance is inferred from clean startup/shutdown tests. Dangling store aliases and hard links fail closed; existing symlink aliases resolve to the same store lock.
+
+| Retained suite | Claims exercised |
+| --- | --- |
+| `tests/pi-durable-contract.test.ts`, `tests/pi-replay-contract.test.ts` | Actual pinned Pi artifact, FULL/reopen, persisted assistant batch before effect, stable public tool identity, atomic saved effect, cooperative replay without regeneration. |
+| `tests/inference-acceptance.test.ts` | Real live adapter over loopback only; durable intent then reservation then dispatch before wire; add/list tool conversion; known usage settlement; ledger reopen/idempotency/conflicts/cap; persisted intent/answered/dispatched application states through real Pi hooks; missing/unsafe credentials, unknown prices, zero funds, context and model/time bounds; connection/progress deadlines; no hidden retry on 503/truncation/abort. The stored-state tests arrange only supported application documents, not Pi tables. |
+| `tests/tools-acceptance.test.ts` | Explicit tool selection, unknown tools/schema rejection, accepted/current permissions, bounded cursor pages, finite tool batch, stable task/call/version action metadata, distinct same-title effects. |
+| `tests/config-runtime-acceptance.test.ts` | Strict malformed/unknown/model/path/limit configuration rejection; duplicate before queue capacity; full-queue refusal; repeated admission near idle completion; unavailable application storage cannot acknowledge or become 404. |
+| `tests/ownership-acceptance.test.ts` | Real-process duplicate identity/path alias/hard-link/shared-socket refusal; foreign path preservation; initialization failure cleanup; mismatched stored agent identity; replacement inode survives actual runner shutdown. |
+| `tests/process-acceptance.test.ts`, `tests/slice.test.ts` | Real CLI/gateway/runner/Pi/SQLite add/list; same-title distinct receipts; CLI and HTTP disconnect after admission; duplicate/conflict; concurrent and idle queue work; denied routes/senders, malformed/oversized bodies; stored reads cause no new ledger attempts; failed outcomes give CLI exit 1; unavailable runner gives 503 and submission says acceptance unconfirmed. |
+
+Current commands and results:
+
+```sh
+node --test tests/pi-durable-contract.test.ts tests/pi-replay-contract.test.ts tests/inference-acceptance.test.ts tests/ownership-acceptance.test.ts tests/config-runtime-acceptance.test.ts tests/tools-acceptance.test.ts tests/process-acceptance.test.ts
+# exit 0, 61 passed, 0 failed/skipped
+npm test
+# exit 0, 62 passed, 0 failed/skipped
+npm run typecheck
+# exit 0, no diagnostics
+node src/cli.ts --config config/assistant.example.json --json config validate
+# exit 0, {"valid":true,"fixture":false}; schema validation only
+git diff --check
+# exit 0
+```
+
+Evidence: [focused safety suite](evidence/td002-safety-focused-current.txt), [full cheap suite](evidence/td002-tests-current.txt), [typecheck](evidence/td002-typecheck-current.txt), [example validation](evidence/td002-config-current.txt), [diff check](evidence/td002-diff-check-current.txt). Candidate revision is uncommitted work on `d9e841d`; [source/document SHA-256 manifest](evidence/td002-candidate-files.sha256) identifies the reviewed file contents. No independent reviewer or authoritative final gate has run.
+
+## Remaining acceptance and parent decision
+
+The live smoke must still use exactly `deepseek-ai/DeepSeek-V4-Flash-0731` through DeepInfra, complete add/list, and record real usage. It remains unapproved, with no real credential supplied or accessed. No substitute model/provider or credential lookup is permitted. TD-002 and the epic remain unpassed. The parent must decide, after fresh independent review, whether this completed local code may merge with the live acceptance gap recorded. This implementation does not authorize that merge or mark the ticket done.
+
+Not run: external inference, TD-003 full forced-crash matrix, TD-004 full persisted race suite, TD-005 services, normal reboot, power-loss, connectors, or an expensive final gate. Local queue/ownership tests are focused acceptance tests, not substitutes for those later tickets.
+
+## Checkpoint paths and continuation changes
+
+The checkpoint already contained the implementation paths below. This continuation changes `src/host/store.ts`, `src/inference/budget.ts`, `src/inference/deepinfra.ts`, `src/runner.ts`, `src/runtime/documents.ts`, `src/runtime/pi-durable.ts`, `src/tools/todos.ts`, and `tests/pi-replay-contract.test.ts`. It adds the five focused acceptance suites and shared `tests/support.ts` listed above, updates this document and the three ticket records, and retains current/historical evidence under `docs/evidence/`. Package pins, lockfile, CLI/gateway/config modules, example configuration, and the two other original tests remain unchanged.
+
+Initial checkpoint paths:
 
 - `.nvmrc`, `package.json`, `package-lock.json`, `tsconfig.json`.
 - `config/assistant.example.json`.
