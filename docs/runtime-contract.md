@@ -1,10 +1,12 @@
 # TD-002 runtime contract evidence
 
-TD-002 has a green local code candidate for independent review, not completed acceptance or merge approval. The full cheap suite passes 62 tests and typecheck passes. Live inference remains unauthorized, the live acceptance checkbox stays open, and the ticket remains blocked. No Pi dependency stop condition has been demonstrated.
+Independent review rejected checkpoint `824494f` for unsafe usage settlement. The bounded correction now passes 85 local tests and typecheck, but fresh-agent review round 2 and the authoritative gate remain pending. Live inference remains unauthorized, the live acceptance checkbox stays open, and TD-002 remains BLOCKED. No partial merge authorization is assumed. No Pi dependency stop condition has been demonstrated.
 
 ## Authorization and worktree
 
 Initial work started on clean branch `feat/td-002-todo-round-trip` at planning commit `91c7880`. The parent checkpointed that work at `d9e841d`. This continuation verified the same branch and a clean worktree at that checkpoint before editing. The owner explicitly authorized correction of the predecessor's test/API/type errors with every assertion retained, focused safety fixes, and deterministic local acceptance tests. This continuation made no commits, merges, pushes, subagents, external inference, production access, connector tests, secret retrieval, or service/global configuration changes. Only synthetic local authentication files were read by the tests. TD-003 through TD-005 remain drafts.
+
+The bounded reviewer-fix continuation started on clean `feat/td-002-todo-round-trip` at `824494f`. The owner authorized new raw-wire regressions and fixture/type corrections with old assertions preserved. Only `src/inference/deepinfra.ts` and `tests/inference-acceptance.test.ts` change executable behavior in this continuation. Documentation and retained evidence are updated below. No commit, merge, push, delegation, live network, real secret access, account, or host change occurred.
 
 The implementor profile references `~/.agents/skills/subagent-tdd-pipeline/SKILL.md`. That file was absent. The owner's request and the local tickets supplied the stage instructions. No separate red-test handoff was present, so the retained tests were authored here.
 
@@ -125,7 +127,7 @@ A real socket-safety failure was found by the new real-process shutdown test: No
 
 One concurrent tool edit timed out acquiring the harness mutation guard. A later serialized invocation of the same guarded edit succeeded. No guard, lock configuration, or bypass was changed.
 
-## Current local candidate
+## Pre-review local candidate
 
 The continuation fixes the listed ledger, queue, ownership, and startup gaps. Unsettled reservations are idempotent for the same ID and immutable estimate, including ledger reopen; changed amounts and settled IDs cannot authorize dispatch. The adapter rechecks `intent` in its dispatch transaction and refuses an existing `dispatched` attempt. Stored responses are reused. Known complete usage settles once; absent usage, truncated/error responses, and aborted dispatch retain the conservative reservation. Queue wakeups are remembered across worker completion, and a failed worker seals admission/lookup. Receipt/conversation lookups use own properties so valid IDs such as `toString` do not collide with object prototypes.
 
@@ -140,7 +142,7 @@ Socket startup locks the canonical endpoint before publication, refuses any exis
 | `tests/ownership-acceptance.test.ts` | Real-process duplicate identity/path alias/hard-link/shared-socket refusal; foreign path preservation; initialization failure cleanup; mismatched stored agent identity; replacement inode survives actual runner shutdown. |
 | `tests/process-acceptance.test.ts`, `tests/slice.test.ts` | Real CLI/gateway/runner/Pi/SQLite add/list; same-title distinct receipts; CLI and HTTP disconnect after admission; duplicate/conflict; concurrent and idle queue work; denied routes/senders, malformed/oversized bodies; stored reads cause no new ledger attempts; failed outcomes give CLI exit 1; unavailable runner gives 503 and submission says acceptance unconfirmed. |
 
-Current commands and results:
+Pre-review commands and results, superseded by the reviewer correction below:
 
 ```sh
 node --test tests/pi-durable-contract.test.ts tests/pi-replay-contract.test.ts tests/inference-acceptance.test.ts tests/ownership-acceptance.test.ts tests/config-runtime-acceptance.test.ts tests/tools-acceptance.test.ts tests/process-acceptance.test.ts
@@ -155,11 +157,41 @@ git diff --check
 # exit 0
 ```
 
-Evidence: [focused safety suite](evidence/td002-safety-focused-current.txt), [full cheap suite](evidence/td002-tests-current.txt), [typecheck](evidence/td002-typecheck-current.txt), [example validation](evidence/td002-config-current.txt), [diff check](evidence/td002-diff-check-current.txt). Candidate revision is uncommitted work on `d9e841d`; [source/document SHA-256 manifest](evidence/td002-candidate-files.sha256) identifies the reviewed file contents. No independent reviewer or authoritative final gate has run.
+These results preceded checkpoint `824494f` and its rejected independent review. The `*-current.txt` evidence paths and candidate manifest now describe the corrected candidate below, not that rejected checkpoint.
+
+## Rejected review and bounded raw-usage correction
+
+The independent reviewer reproduced three unsafe settlements in the installed Pi AI 1.4.0 adapter. Raw `{prompt_tokens:20,total_tokens:25}` settled 17,408 microdollars at 20; raw `{completion_tokens:5,total_tokens:25}` settled at 5; raw `{prompt_tokens:20,completion_tokens:5,total_tokens:2500}` settled at 25. Pi's `parseChunkUsage` defaults missing counts to zero and replaces the raw total with a computed sum. Equality checks on normalized usage therefore did not establish raw completeness or consistency. Retained reviewer outputs: [usage check](evidence/td002-independent-usage-check.txt), [raw and normalized adversarial cases](evidence/td002-independent-adversarial.txt). Review round 1 is REJECTED, not pending or approved.
+
+The mandatory adapter now installs the public `onProviderStreamEvent` observer after the caller options. Installed `dist/types.d.ts` documents that callback as read-only and pre-normalization; `dist/api/simple-options.js` forwards it, and `dist/api/openai-completions.js` invokes it before `parseChunkUsage`. No dependency or private Pi table was patched. The adapter follows Pi's top-level usage or first-choice fallback selection and snapshots the latest selected raw counts before forwarding the caller's observer. Every selected usage record replaces the prior validation result, so an invalid final record cannot reuse an earlier valid record.
+
+Settlement in live mode now requires explicit raw prompt, completion, and total counts, each a nonnegative safe integer, with raw total equal to prompt plus completion. Those raw counts must also match normalized input plus cache counts, output, and total. Existing normalized validity and non-error/non-aborted checks remain. Missing, malformed, or inconsistent raw usage leaves the original reservation unsettled, even if Pi returns a successful answer. Normal complete usage settles at 25 microdollars; explicit zero prompt or completion is accepted when consistent. Fixture-mode behavior is unchanged.
+
+The new local wire regression adds missing prompt/completion/total, inconsistent total, negative/fractional/unsafe/string/null counts in each required field, valid usage, and explicit zero counts. All old assertions remain. Before the source fix, the focused regression exited 1 with 9 passing and 14 failing tests including the parent test. [Red output](evidence/td002-raw-usage-red.txt). After the fix:
+
+```sh
+node --test tests/inference-acceptance.test.ts
+# exit 0, 48 passed, 0 failed/skipped
+node --test tests/pi-durable-contract.test.ts tests/pi-replay-contract.test.ts tests/inference-acceptance.test.ts tests/ownership-acceptance.test.ts tests/config-runtime-acceptance.test.ts tests/tools-acceptance.test.ts tests/process-acceptance.test.ts
+# exit 0, 84 passed, 0 failed/skipped
+npm test
+# exit 0, 85 passed, 0 failed/skipped
+npm run typecheck
+# exit 0, no diagnostics
+node src/cli.ts --config config/assistant.example.json --json config validate
+# exit 0, {"valid":true,"fixture":false}; no credential access
+# Local document-link/status checks and git diff --check also pass.
+```
+
+Evidence: [adapter](evidence/td002-adapter-current.txt), [focused safety suite](evidence/td002-safety-focused-current.txt), [full cheap suite](evidence/td002-tests-current.txt), [typecheck](evidence/td002-typecheck-current.txt), [example](evidence/td002-config-current.txt), [document checks](evidence/td002-document-check.txt), [diff check](evidence/td002-diff-check-current.txt). Candidate revision is the uncommitted correction on `824494f`; the regenerated [SHA-256 manifest](evidence/td002-candidate-files.sha256) covers current source, tests, documents, and TD-002 evidence, including the two outputs whose trailing whitespace the parent normalized before checkpoint. [Hash verification](evidence/td002-candidate-hash-check.txt) must be read alongside it. The manifest excludes itself and its verification output to avoid self-reference.
+
+The first final evidence check exited 2 because npm's successful typecheck output ended with an added blank line at EOF. Only that trailing blank line was removed from `td002-typecheck-current.txt`; no diagnostic or test output was removed. The subsequent diff check and regenerated manifest verification pass. The copied reviewer reproductions match their `/tmp` originals byte for byte.
+
+Fresh independent review round 2 subsequently APPROVED the corrected code with no must-fix findings. The reviewer reran all 85 tests and typecheck, verified the candidate manifest, and passed 13 additional loopback adversarial checks. See the [review record](evidence/td002-review-round-2.md). This is code approval only, not ticket completion or authorization to merge with live acceptance missing. No configured pipeline-final gate is claimed.
 
 ## Remaining acceptance and parent decision
 
-The live smoke must still use exactly `deepseek-ai/DeepSeek-V4-Flash-0731` through DeepInfra, complete add/list, and record real usage. It remains unapproved, with no real credential supplied or accessed. No substitute model/provider or credential lookup is permitted. TD-002 and the epic remain unpassed. The parent must decide, after fresh independent review, whether this completed local code may merge with the live acceptance gap recorded. This implementation does not authorize that merge or mark the ticket done.
+The live smoke must still use exactly `deepseek-ai/DeepSeek-V4-Flash-0731` through DeepInfra, complete add/list, and record real usage. It remains unapproved, with no real credential supplied or accessed. No substitute model/provider or credential lookup is permitted. TD-002 and the epic remain unpassed. The full ticket remains BLOCKED until a separately authorized live smoke passes. No partial merge authorization is assumed. Fresh-agent review round 2 approved the code, but did not waive live acceptance. The parent leaves develop unchanged. This implementation does not authorize a partial-code merge or mark the ticket done.
 
 Not run: external inference, TD-003 full forced-crash matrix, TD-004 full persisted race suite, TD-005 services, normal reboot, power-loss, connectors, or an expensive final gate. Local queue/ownership tests are focused acceptance tests, not substitutes for those later tickets.
 

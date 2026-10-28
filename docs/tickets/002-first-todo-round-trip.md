@@ -61,11 +61,15 @@ If the public Pi interfaces cannot provide the required transaction, replay, or 
 
 ## Implementation authorization
 
-The owner explicitly authorized TD-002 implementation in the clean worktree on `feat/td-002-todo-round-trip`, off develop with the planning commit cherry-picked. Test the actual dependency first and stop with a retained executable reproduction if its public contract fails. Deterministic local fixtures only. No live inference, credentials, connector tests, host/service installation, commits, merges, pushes, or subagents. Independent review and merge belong to the parent later.
+The owner explicitly authorized TD-002 implementation in the clean worktree on `feat/td-002-todo-round-trip`, off develop with the planning commit cherry-picked. Test the actual dependency first and stop with a retained executable reproduction if its public contract fails. Deterministic local fixtures only. No live inference, credentials, connector tests, or host/service installation. The parent coordinates local commits and fresh review. The owner authorized a local merge only after completion and passing review. No push is authorized.
 
 ## Evidence
 
-The current uncommitted candidate is based on parent checkpoint `d9e841d` on `feat/td-002-todo-round-trip`. The owner authorized correction of the predecessor's fixture/type errors and focused acceptance tests, retaining every assertion. Those corrections and the ledger, queue, ownership/socket, and startup fixes now pass the full cheap suite. `npm test`: exit 0, 62 passed, 0 failed/skipped. `npm run typecheck`: exit 0, no diagnostics. The focused safety command passes 61 tests. Example schema validation and `git diff --check` also exit 0. No test was weakened, retired, or skipped.
+Independent review REJECTED checkpoint `824494f` on `feat/td-002-todo-round-trip`. The reviewer showed that Pi AI normalizes missing raw counts to zero and recomputes the total, allowing incomplete or inconsistent usage to settle the 17,408-microdollar reservation at 20, 5, or 25. [Reviewer usage checks](../evidence/td002-independent-usage-check.txt) and [adversarial records](../evidence/td002-independent-adversarial.txt) retain the failure.
+
+The current uncommitted correction on `824494f` uses Pi's supported pre-normalization `onProviderStreamEvent` observer in the mandatory adapter. Live settlement requires complete nonnegative safe-integer raw prompt/completion/total counts, a consistent raw sum, and agreement with normalized usage. Otherwise the reservation stays conservative and unsettled. No dependency or private Pi tables changed. New loopback regressions retain all old assertions and cover missing fields, inconsistent totals, negative/fractional/unsafe/string/null counts, valid usage, and explicit zeros. The new regression ran red before the fix. The owner explicitly authorized these test additions and fixture/type corrections; no test was weakened, retired, or skipped.
+
+Latest local checks: `npm test` exits 0 with 85 passed and 0 failed/skipped; `npm run typecheck` exits 0 with no diagnostics. The adapter suite passes 48 tests and the focused safety command passes 84. Example schema validation, local document checks, manifest verification, and `git diff --check` pass. These are cheap green checks, not fresh reviewer or authoritative-gate approval.
 
 The new deterministic loopback HTTP/SSE fixture runs the actual live DeepInfra adapter implementation and Pi's OpenAI-completions implementation, using synthetic authorization only. It proves local wire conversion and guards, not DeepInfra/model availability, current pricing, real usage, or answer quality. No external inference occurred.
 
@@ -76,8 +80,9 @@ This is not a Pi dependency stop: the executed document/FULL and stable replay c
 Blocked conditions:
 
 - Live smoke remains unauthorized and real credentials were not supplied or accessed. The exact selected model is unchanged. Its acceptance checkbox stays open and the ticket stays blocked, not done.
-- Fresh independent review and the authoritative final gate have not run. Parent decision requested: may the completed local code merge after review with the live acceptance gap explicitly retained? No merge is authorized here.
+- Review round 1 REJECTED the checkpoint. Fresh independent review round 2 APPROVED the corrected code with no must-fix findings. It reran all 85 tests, typecheck, and 13 additional loopback checks. See the [review record](../evidence/td002-review-round-2.md). This is code approval, not completion or merge approval.
+- The full ticket remains BLOCKED until the separately authorized live smoke passes. No partial merge authorization is assumed.
 
-The earlier test-correction approval blocker and local safety gaps are resolved for this candidate. Unknown/stale sockets intentionally fail closed rather than being automatically reclaimed. TD-003 must define and test crash restart/stale-endpoint recovery. The full crash matrix, persisted race suite, service/reboot and power-loss proofs remain outside this TD-002 candidate.
+The earlier test-correction approval blocker is resolved. The local correction passed fresh code review; the failed first review remains recorded. Unknown/stale sockets intentionally fail closed rather than being automatically reclaimed. TD-003 must define and test crash restart/stale-endpoint recovery. The full crash matrix, persisted race suite, service/reboot and power-loss proofs remain outside this TD-002 candidate.
 
 This continuation made no commit, merge, push, subagent, service installation, connector test, or live-inference call. The parent checkpoint is prior history. TD-003 through TD-005 remain drafts.

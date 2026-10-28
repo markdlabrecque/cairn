@@ -9,7 +9,7 @@ Start with [TD-001: crash-safe todo slice](001-crash-safe-todo-slice.md). Review
 | Ticket | Deliverable | Status | Depends on |
 | --- | --- | --- | --- |
 | [TD-001](001-crash-safe-todo-slice.md) | Crash-safe terminal todo assistant | draft | TD-002 through TD-005 |
-| [TD-002](002-first-todo-round-trip.md) | First bounded CLI-to-todo round trip | blocked | Live smoke unauthorized; local code green, fresh review and parent merge decision pending |
+| [TD-002](002-first-todo-round-trip.md) | First bounded CLI-to-todo round trip | blocked | Live smoke unauthorized; corrected code passed independent review 2 |
 | [TD-003](003-crash-safe-recovery.md) | Same receipts, actions, and results after a crash | draft | TD-002 |
 | [TD-004](004-persisted-limits.md) | Admission, permissions, and limits across restart | draft | TD-003 |
 | [TD-005](005-linux-service-demo.md) | Isolated Linux services and recorded demo | draft | TD-004 |
@@ -42,11 +42,11 @@ The owner confirmed both choices for TD-002:
 1. Use JSON for the first slice because it is simpler. YAML remains the final-product preference; YAML support, testing, and linting are deferred.
 2. Ship `add_todo` and `list_todos` only. Completion with history remains later work.
 
-The [approval record](001-crash-safe-todo-slice.md#approval-record) preserves the response and clarification. The owner subsequently authorized TD-002 only, in its existing feature worktree, with deterministic local fixtures and the dependency stop rule. No live inference or credentials are authorized. No commits, merges, pushes, or subagents. Fresh independent review and merge belong to the parent later. TD-003 through TD-005 remain drafts.
+The [approval record](001-crash-safe-todo-slice.md#approval-record) preserves the response and clarification. The owner subsequently authorized TD-002 only, in its existing feature worktree, with deterministic local fixtures and the dependency stop rule. No live inference or credentials are authorized. The parent coordinates local commits and fresh independent review. The owner authorized a local merge only after completion and passing review. No push is authorized. TD-003 through TD-005 remain drafts.
 
-TD-002 now has a green local candidate: 62 cheap tests pass, including real-process and public Pi contracts, focused safety guards/ownership/queue tests, and the actual live adapter over a synthetic loopback wire fixture. Typecheck passes. The owner authorized correction of the predecessor's fixture/type errors; every assertion remains. Historical failures are retained in [runtime evidence](../runtime-contract.md). No Pi dependency failure has been demonstrated.
+Independent review REJECTED TD-002 checkpoint `824494f` for unsafe settlement after Pi normalized incomplete or inconsistent raw usage. The bounded correction checks raw usage through the supported pre-normalization observer, then requires agreement with normalized counts. New local wire regressions preserve all old assertions. Latest cheap checks pass 85 tests and typecheck; the adapter suite passes 48. [Runtime evidence](../runtime-contract.md) retains the review failure, red regression, correction, latest outputs, and regenerated candidate hashes. No Pi dependency failure has been demonstrated.
 
-Live acceptance remains unapproved, unchecked, and blocked. Fresh independent review follows. The parent must decide whether the completed local code may merge with that gap explicitly recorded; this is not merge approval or ticket completion. Full crash/race/service/reboot evidence remains later work.
+Fresh independent review round 2 approved the code with no must-fix findings. Its 85-test run, typecheck, and 13 additional loopback checks passed. See the [review record](../evidence/td002-review-round-2.md). Live acceptance remains unauthorized, unchecked, and BLOCKED. No merge occurred and no partial merge authorization is assumed. Full crash/race/service/reboot evidence remains later work.
 
 ## Export the plan
 

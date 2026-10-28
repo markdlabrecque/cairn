@@ -10,5 +10,5 @@ personal-agent-td-002@0.0.0 /home/mark/Projects/pi-durable-agents-td-002
 └── typescript@5.9.3
 
 5f2996f87dad39dd788dbc7c5dc8b8219b555149a59d6312494337ee06d24e65  package-lock.json
-d9e841d23a277323393f11daa118bd3be90c231c
+824494ff97b5eb1d018eec3c91dffd482e49095f
 feat/td-002-todo-round-trip

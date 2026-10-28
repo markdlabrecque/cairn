@@ -34,12 +34,12 @@ async function wire(handler: (body: Record<string, unknown>, res: ServerResponse
   return { endpoint: `http://127.0.0.1:${address.port}/v1/openai`, calls: () => calls,
     async close() { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); assert.deepEqual(failures, []); } };
 }
-function answer(res: ServerResponse, content: string, usage = true) {
+function answer(res: ServerResponse, content: string, usage: boolean | Record<string, unknown> = true) {
   res.writeHead(200, { 'content-type': 'text/event-stream' });
   const chunk = { id: 'local-1', object: 'chat.completion.chunk', created: 1, model: 'deepseek-ai/DeepSeek-V4-Flash-0731' };
   res.write(`data: ${JSON.stringify({ ...chunk, choices: [{ index: 0, delta: { role: 'assistant', content }, finish_reason: null }] })}\n\n`);
   res.write(`data: ${JSON.stringify({ ...chunk, choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
-    ...(usage ? { usage: { prompt_tokens: 20, completion_tokens: 5, total_tokens: 25 } } : {}) })}\n\n`);
+    ...(usage ? { usage: usage === true ? { prompt_tokens: 20, completion_tokens: 5, total_tokens: 25 } : usage } : {}) })}\n\n`);
   res.end('data: [DONE]\n\n');
 }
 async function adapter(config: Config, ledger: Reservations, endpoint: string, startedAt = Date.now(),
@@ -192,6 +192,43 @@ test('unknown usage and failed dispatch retain conservative charges without hidd
       try { assert.deepEqual({ ...db.prepare('SELECT micro_usd,settled FROM reservations').get() },
         { micro_usd: f.config.limits.inputTokens + f.config.limits.outputTokens, settled: 0 }); } finally { db.close(); }
     } finally { await app?.close(); await local.close(); real.close(); await f.cleanup(); }
+  });
+});
+
+test('raw wire usage must be complete and consistent before normalized usage can settle', { timeout: 15000 }, async t => {
+  const cases: [string, Record<string, unknown>, boolean][] = [
+    ['missing prompt', { completion_tokens: 5, total_tokens: 25 }, false],
+    ['missing completion', { prompt_tokens: 20, total_tokens: 25 }, false],
+    ['missing total', { prompt_tokens: 20, completion_tokens: 5 }, false],
+    ['inconsistent total', { prompt_tokens: 20, completion_tokens: 5, total_tokens: 2500 }, false],
+    ['valid usage', { prompt_tokens: 20, completion_tokens: 5, total_tokens: 25 }, true],
+    ['explicit zero completion', { prompt_tokens: 20, completion_tokens: 0, total_tokens: 20 }, true],
+    ['explicit zero prompt', { prompt_tokens: 0, completion_tokens: 5, total_tokens: 5 }, true],
+  ];
+  for (const field of ['prompt_tokens', 'completion_tokens', 'total_tokens']) {
+    for (const value of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1, '5', null]) {
+      cases.push([`${field}=${value}`, { prompt_tokens: 20, completion_tokens: 5, total_tokens: 25, [field]: value }, false]);
+    }
+  }
+  for (const [name, usage, known] of cases) await t.test(name, async () => {
+    const f = await fixture();
+    f.config.inference.mode = 'live'; f.config.inference.credentialFile = f.config.authFile;
+    await writeFile(f.config.authFile, 'synthetic-model-token');
+    const ledger = spendingLedger(f.config.ledger, f.config);
+    const local = await wire((_body, res) => answer(res, 'Raw usage answer', usage));
+    let app: Awaited<ReturnType<typeof adapter>> | undefined;
+    try {
+      app = await adapter(f.config, ledger, local.endpoint);
+      assert.equal((await app.run()).status, 'done');
+      assert.equal(local.calls(), 1);
+      assert.equal(Object.values((await app.state())!.calls)[0]!.state, 'answered');
+      const reservation = f.config.limits.inputTokens + f.config.limits.outputTokens;
+      const db = new DatabaseSync(f.config.ledger);
+      try {
+        assert.deepEqual({ ...db.prepare('SELECT micro_usd,reserved_micro_usd,settled FROM reservations').get() },
+          { micro_usd: known ? Number(usage.total_tokens) : reservation, reserved_micro_usd: reservation, settled: known ? 1 : 0 });
+      } finally { db.close(); }
+    } finally { await app?.close(); await local.close(); ledger.close(); await f.cleanup(); }
   });
 });
 
