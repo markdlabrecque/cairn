@@ -6,7 +6,7 @@ Status: draft
 Assignee: none
 Depends on: TD-002, TD-003, TD-004, TD-005
 Authority: PRD v0.5, plus owner approval of this slice
-Implementation authorized: no
+Implementation authorized: TD-002 only, in its worktree; no live inference
 
 ## Outcome
 
@@ -144,8 +144,12 @@ The owner then clarified:
 
 > I want to do JSON because it’s simpler for the first slice. We can add YAML testing/linting later.
 
-These choices are confirmed. The earlier YAML preference applies to the final product, not this slice. No implementation or live inference is authorized or started.
+These choices are confirmed. The earlier YAML preference applies to the final product, not this slice. The planning request did not authorize implementation or live inference. The subsequent authorization below permits TD-002 only.
+
+### TD-002 implementation authorization
+
+The owner explicitly authorized implementation of TD-002 in `feat/td-002-todo-round-trip`, off develop with the planning commit cherry-picked. Verify the actual pinned artifact first. If its public transaction, replay, or pre-dispatch contract fails, retain a minimal executable reproduction and mark TD-002 blocked rather than building a replacement runtime. Only deterministic local inference fixtures are authorized. Live inference, credential access, connectors, host/service installation, commits, merges, pushes, and subagents are excluded. Fresh independent review and merge happen later through the parent. TD-003, TD-004, and TD-005 remain drafts and are not authorized.
 
 ## Acceptance record
 
-Pending. No runtime tests or live inference performed for this plan.
+Pending. TD-002 has a passing deterministic real-process add/list path and passing public document/FULL/replay probes, but is blocked, not done. Typecheck fails in its implementor-authored fixture, and permission to correct that setup has been requested without weakening assertions. Remaining safety coverage and known implementation gaps are recorded in [runtime-contract.md](../runtime-contract.md). No Pi dependency failure has been demonstrated. No live inference is authorized or performed. No independent review or final gate has run.

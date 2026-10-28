@@ -9,7 +9,7 @@ Start with [TD-001: crash-safe todo slice](001-crash-safe-todo-slice.md). Review
 | Ticket | Deliverable | Status | Depends on |
 | --- | --- | --- | --- |
 | [TD-001](001-crash-safe-todo-slice.md) | Crash-safe terminal todo assistant | draft | TD-002 through TD-005 |
-| [TD-002](002-first-todo-round-trip.md) | First bounded CLI-to-todo round trip | draft | None; start gate below |
+| [TD-002](002-first-todo-round-trip.md) | First bounded CLI-to-todo round trip | blocked | Test-setup correction approval; safety coverage and live smoke incomplete |
 | [TD-003](003-crash-safe-recovery.md) | Same receipts, actions, and results after a crash | draft | TD-002 |
 | [TD-004](004-persisted-limits.md) | Admission, permissions, and limits across restart | draft | TD-003 |
 | [TD-005](005-linux-service-demo.md) | Isolated Linux services and recorded demo | draft | TD-004 |
@@ -42,7 +42,9 @@ The owner confirmed both choices for TD-002:
 1. Use JSON for the first slice because it is simpler. YAML remains the final-product preference; YAML support, testing, and linting are deferred.
 2. Ship `add_todo` and `list_todos` only. Completion with history remains later work.
 
-The [approval record](001-crash-safe-todo-slice.md#approval-record) preserves the response and clarification. These choices do not authorize implementation. Tickets remain drafts until the owner asks to start.
+The [approval record](001-crash-safe-todo-slice.md#approval-record) preserves the response and clarification. The owner subsequently authorized TD-002 only, in its existing feature worktree, with deterministic local fixtures and the dependency stop rule. No live inference or credentials are authorized. No commits, merges, pushes, or subagents. Fresh independent review and merge belong to the parent later. TD-003 through TD-005 remain drafts.
+
+TD-002 now has a passing deterministic two-process add/list path and two passing Pi contract tests. Typecheck fails in its implementor-authored replay fixture; approval was requested for API/type-narrowing corrections with all assertions preserved. No Pi dependency failure has been demonstrated. Remaining safety work and the unauthorized live smoke keep acceptance open. See [runtime evidence](../runtime-contract.md).
 
 ## Export the plan
 
