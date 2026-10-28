@@ -1,6 +1,8 @@
-# Minimal personal agent framework
+# Cairn
 
-Product requirements document, version 0.5  
+Personal agent framework based on Pi Durable.
+
+Product requirements document, version 0.6\
 Date: 2026-10-27  
 Status: Reconciled with recorded owner decisions and completed integration spikes. Implementation specification and sign-off remain pending. No framework implementation is claimed.
 
@@ -71,9 +73,13 @@ The resolved [Linux operational and storage design](.scratch/personal-assistant/
 - Drain active work and preserve queued/waiting work before upgrading. Make a pre-upgrade backup, check compatibility, apply the approved update/migrations, and verify startup/recovery. Stop on failure; never start an older binary against a potentially incompatible migrated store.
 - Persist every upgrade outcome and its explanation. Deliver explicit success/failure notification after quiet hours end at 08:00, or when delivery next becomes available. Never notify overnight, even on failure. Explicitly requested daytime-upgrade outcomes may be reported immediately outside quiet hours.
 
+## Project name
+
+The owner selected **Cairn** as the project and product name. Use Cairn in current documentation and product-facing descriptions. Pi Durable is the runtime dependency, not the product name. Existing repository paths, technical identifiers, and historical evidence retain their names unless separately migrated. This naming decision does not change scope, implementation authorization, or acceptance status.
+
 ## Purpose
 
-Build a small, self-hosted framework for personal agents based on Pi Durable. The owner defines each agent's instructions, permitted tools and skills, model, and messaging routes in configuration. Agents receive messages through a gateway, call externally hosted language models, and retain enough durable state to recover safely after interruption.
+Build Cairn as a small, self-hosted framework for personal agents based on Pi Durable. The owner defines each agent's instructions, permitted tools and skills, model, and messaging routes in configuration. Agents receive messages through a gateway, call externally hosted language models, and retain enough durable state to recover safely after interruption.
 
 The first deployment runs on one Linux host under systemd. Keep platform dependencies behind narrow interfaces so a later project can evaluate Cloudflare Durable Objects without rewriting the agent's application logic.
 
