@@ -1,8 +1,12 @@
-# Personal assistant
+# Cairn glossary
 
-Terms for the owner's assistant, its work, and its communication identities.
+Terms for Cairn, the owner's assistant, its work, and its communication identities.
 
 ## Language
+
+**Cairn**:
+The personal agent framework used to run the owner's configured assistants. Cairn is the project and product name, not the name of an individual agent.
+_Avoid_: Pi Durable when referring to the product rather than its runtime dependency
 
 **Personal assistant**:
 The single initial assistant responsible for the owner's todos, reminders, calendar work, and email work.

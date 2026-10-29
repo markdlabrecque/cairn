@@ -1,4 +1,4 @@
-# Personal assistant implementation decision map
+# Cairn implementation decision map
 
 Labels: wayfinder:map
 Status: open
@@ -13,7 +13,7 @@ An implementation-ready specification for the PRD's M0 through M4, updated for t
 - Use Wayfinder, grilling, and domain-modeling each session; use research or prototype for those ticket types. Resolve at most one non-research ticket per session.
 - Local Markdown tracker: child issues live in `issues/`; `Status: open` means unclaimed, `claimed` means owned, and `resolved` means answered and closed. `Status: closed` with a disposition records its reason for closure; deferred tickets are not pass claims, while the completed integration spikes explicitly record owner-confirmed passes. Remove closed tickets' blocking edges. Record `Assignee: mark` when claiming. `Blocked by` lists ticket numbers; every blocker must be resolved. Scan by numeric order for the first open, unblocked ticket, excluding any ticket labelled `spike`. The owner authorized the additional `spike` label on 2026-10-25. Tickets closed with deferred exploration retain their decisions and do not block current mapping. Use the current integration status below rather than assuming linked spikes remain open.
 - Record resolutions in the ticket's `Answer` section, then link a one-line gist under Decisions so far. Research evidence lives in `research/` and is linked from its ticket.
-- This directory is a local Git repository initialized on `main` at the owner's request on 2026-10-27. No remote is configured. Keep planning tickets, authored research, and redacted evidence in version control; ignore generated exports, temporary work, credentials, and runtime state. Do not publish or add a remote without owner authorization.
+- This directory is a Git repository initialized on `main` at the owner's request on 2026-10-27. The owner subsequently authorized creating `markdlabrecque/cairn` on GitHub, configuring `origin`, and pushing the current changes. The repository is public at `https://github.com/markdlabrecque/cairn`; the owner explicitly authorized public visibility, committing authored work including the Hermes research notes, pushing the combined TD-002 branch, and opening a draft PR into `develop`. Keep planning tickets, authored research, and redacted evidence in version control; ignore generated exports, temporary work, credentials, and runtime state. This authorization does not permit publishing secrets or raw private state.
 - Research can establish documented behavior and propose compatibility experiments. Only an actual experiment can establish runtime recovery evidence. Do not present documentation checks as passing tests.
 - The owner deferred recovery test setup until implementation. Settle workflows, Slack interactions, reminders, permissions, and operational design using documented contracts and explicit assumptions. Verify normal reboot/resume with the first working implementation; remaining action-safety and operational checks stay in their implementation milestones.
 - The Slack Free-plan interaction spike is complete and supports the selected connector. It is separate from deferred runtime recovery acceptance. Do not silently upgrade the plan, substitute custom controls, or change connectors.
@@ -24,6 +24,8 @@ An implementation-ready specification for the PRD's M0 through M4, updated for t
 - Planning only. Prototypes are explicitly disposable experiments; implementation deliverables are outside this map. Unselected provider-specific research graduates after providers are known.
 
 ## Decisions so far
+
+- Project name: **Cairn**, explicitly selected by the owner. See the [PRD naming decision](../../pi-durable-personal-agent-prd.md#project-name). Pi Durable remains the runtime dependency; historical records and existing technical paths are not renamed by this decision.
 
 - [Choose email, calendar, and todo services](issues/01-choose-connected-services.md): Google Calendar and Gmail on the same personal Google account, plus same-host Proton Bridge with reading and draft creation allowed but sending prohibited, plus built-in durable todos and reminders.
 - [Verify the Pi Durable dependency contract](issues/02-verify-pi-durable-contract.md): Candidate pins and documented recovery contracts researched; dependency acceptance still requires experiments.
