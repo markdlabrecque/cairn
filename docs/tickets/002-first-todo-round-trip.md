@@ -63,6 +63,12 @@ If the public Pi interfaces cannot provide the required transaction, replay, or 
 
 The owner explicitly authorized TD-002 implementation in the clean worktree on `feat/td-002-todo-round-trip`, off develop with the planning commit cherry-picked. Test the actual dependency first and stop with a retained executable reproduction if its public contract fails. Deterministic local fixtures only. No live inference, credentials, connector tests, or host/service installation. The parent coordinates local commits and fresh review. The owner authorized a local merge only after completion and passing review. No push is authorized.
 
+## Publication update
+
+The owner subsequently authorized committing all authored work, publishing to the public `markdlabrecque/cairn` repository, and opening a draft PR into `develop`. This supersedes the earlier no-push restriction, not the live-acceptance gate or merge restriction. TD-002 remains blocked pending a separately authorized live DeepInfra smoke. No live inference or service installation is part of publication.
+
+The protected dotenv credential loader and its synthetic tests were added after independent review round 2. They are locally tested but have not been independently re-reviewed. The review record, `*-current.txt` outputs, and `td002-candidate-files.sha256` below are historical pre-dotenv snapshot evidence, not hashes or approval for the published source. Publication checks are reported on the draft PR.
+
 ## Evidence
 
 Independent review REJECTED checkpoint `824494f` on `feat/td-002-todo-round-trip`. The reviewer showed that Pi AI normalizes missing raw counts to zero and recomputes the total, allowing incomplete or inconsistent usage to settle the 17,408-microdollar reservation at 20, 5, or 25. [Reviewer usage checks](../evidence/td002-independent-usage-check.txt) and [adversarial records](../evidence/td002-independent-adversarial.txt) retain the failure.

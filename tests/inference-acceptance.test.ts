@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { once } from 'node:events';
+import { dirname, join } from 'node:path';
 import { writeFile, chmod } from 'node:fs/promises';
 import { DatabaseSync } from 'node:sqlite';
 import { BACKGROUND_CONTEXT as context } from '@earendil-works/chord/context';
@@ -126,10 +127,12 @@ test('actual live adapter orders durable intent/reservation/dispatch before loop
   } finally { await app!?.close(); await local.close(); real.close(); await f.cleanup(); }
 });
 
-test('actual live wire tool-call conversion executes add/list from a persisted assistant batch', { timeout: 10000 }, async () => {
+test('actual live wire authenticates from dotenv and executes add/list from a persisted assistant batch', { timeout: 10000 }, async () => {
   const f = await fixture();
-  f.config.inference.mode = 'live'; f.config.inference.credentialFile = f.config.authFile;
-  await writeFile(f.config.authFile, 'synthetic-model-token');
+  f.config.inference.mode = 'live';
+  // Use an isolated synthetic dotenv file, never the owner's worktree credentials.
+  f.config.inference.credentialFile = join(dirname(f.config.authFile), '.env');
+  await writeFile(f.config.inference.credentialFile, 'DEEPINFRA_API_KEY="synthetic-model-token"\n', { mode: 0o600 });
   const ledger = spendingLedger(f.config.ledger, f.config);
   let app: Awaited<ReturnType<typeof adapter>> | undefined;
   let count = 0;

@@ -5,7 +5,8 @@ import { createAssistantMessageEventStream } from '@earendil-works/pi-ai/utils/e
 import { openAICompletionsApi } from '@earendil-works/pi-ai/api/openai-completions.lazy';
 import { GenerationTask, defineExtension, hook, type Harness } from '@earendil-works/pi-durable';
 import { BACKGROUND_CONTEXT as context } from '@earendil-works/chord/context';
-import { protectedFile, type Config } from '../config.ts';
+import { type Config } from '../config.ts';
+import { deepInfraCredential } from './credentials.ts';
 import { StateDoc, active } from '../runtime/documents.ts';
 import type { Reservations } from './budget.ts';
 
@@ -58,7 +59,7 @@ export function inference(config: Config, ledger: Reservations, getHarness: () =
       if (rates.inputUsdPerMillion === null || rates.outputUsdPerMillion === null) throw new Error('Unknown model pricing');
       if (Buffer.byteLength(JSON.stringify(input)) + 1024 > config.limits.inputTokens) throw new Error('Input context bound exceeded');
       const credential = config.inference.mode === 'live'
-        ? await protectedFile(rates.credentialFile ?? (() => { throw new Error('Missing model credentials'); })()) : undefined;
+        ? await deepInfraCredential(rates.credentialFile ?? (() => { throw new Error('Missing model credentials'); })()) : undefined;
       const prior = await harness.commit(async tx => {
         const state = await tx.doc(StateDoc);
         const request = active(state);

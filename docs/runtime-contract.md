@@ -1,6 +1,6 @@
 # TD-002 runtime contract evidence
 
-Independent review rejected checkpoint `824494f` for unsafe usage settlement. The bounded correction now passes 85 local tests and typecheck, but fresh-agent review round 2 and the authoritative gate remain pending. Live inference remains unauthorized, the live acceptance checkbox stays open, and TD-002 remains BLOCKED. No partial merge authorization is assumed. No Pi dependency stop condition has been demonstrated.
+Independent review rejected checkpoint `824494f` for unsafe usage settlement. Review round 2 later approved the bounded pre-dotenv correction, as recorded below. The subsequent protected dotenv loader and synthetic tests are locally tested but not independently re-reviewed. The `*-current.txt` outputs and `td002-candidate-files.sha256` are retained historical pre-dotenv snapshot evidence, not a manifest or approval of the published source. The owner authorized public publication and a draft PR into `develop`, not merging, live inference, or service installation. Live acceptance remains pending and TD-002 remains BLOCKED. No pipeline-final approval or Pi dependency stop condition is claimed.
 
 ## Authorization and worktree
 
